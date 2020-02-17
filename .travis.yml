@@ -1,0 +1,23 @@
+sudo: required
+services: 
+    - docker
+
+before_install:
+    - docker build -t nagameena/react-test -f ./client/Dockerfile
+
+script:
+    - docker run -e CI=true nagameena/react-test npm test -- --coverage
+
+after_success:
+    - docker build -t nagameena/multi-client ./client
+    - docker build -t nagameena/multi-nginx ./nginx
+    - docker build -t nagameena/multi-server ./server
+    - docker build -t nagameena/multi-worker ./worker
+# Log in to the docker CLI
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+# Take those images and push them to docker hub
+    - docker push nagameena/multi-client
+    - docker push nagameena/multi-nginx
+    - docker push nagameena/multi-server
+    - docker push nagameena/multi-worker
